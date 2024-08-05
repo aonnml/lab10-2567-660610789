@@ -1,14 +1,36 @@
 "use client";
 
+import UserCard from "@/components/UserCard";
+import { cleanUser } from "@/libs/cleanUser";
+import { UserCardProps } from "@/libs/types";
 import axios from "axios";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function RandomUserPage() {
   // annotate type for users state variable
-  const [users, setUsers] = useState(null);
+  const [users, setUsers] = useState<UserCardProps[]>([]);
 
   const [isLoading, setIsLoading] = useState(false);
   const [genAmount, setGenAmount] = useState(1);
+
+  const [isFirstlode, setisFirstlode] = useState(true);
+
+  useEffect(() => {
+    if(isFirstlode) {
+      setisFirstlode(false);
+      return;
+    }
+    const Json = JSON.stringify(genAmount);
+    localStorage.setItem("genAmount", Json);
+  },[genAmount]);
+
+  useEffect(() => {
+    const Json = localStorage.getItem("genAmount");
+    if(Json !== null) {
+      const newJson = JSON.parse(Json);
+      setGenAmount(newJson);
+    }
+  },[])
 
   const generateBtnOnClick = async () => {
     setIsLoading(true);
@@ -21,6 +43,8 @@ export default function RandomUserPage() {
     //Your code here
     //Process result from api response with map function. Tips use function from /src/libs/cleanUser
     //Then update state with function : setUsers(...)
+    const cleanUsers = users.map(cleanUser);
+    setUsers(cleanUsers);
   };
 
   return (
@@ -32,7 +56,7 @@ export default function RandomUserPage() {
           className="form-control text-center"
           style={{ maxWidth: "100px" }}
           type="number"
-          onChange={(e) => setGenAmount(e.target.value)}
+          onChange={(e) => setGenAmount(+e.target.value)}
           value={genAmount}
         />
         <button className="btn btn-dark" onClick={generateBtnOnClick}>
@@ -42,7 +66,9 @@ export default function RandomUserPage() {
       {isLoading && (
         <p className="display-6 text-center fst-italic my-4">Loading ...</p>
       )}
-      {users && !isLoading && users.map(/*code map rendering UserCard here */)}
+      {users && !isLoading && users.map(
+        (user) => (<UserCard key = {user.email} {...user}/>)
+        /*code map rendering UserCard here */)}
     </div>
   );
 }
